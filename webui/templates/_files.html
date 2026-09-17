@@ -1,0 +1,71 @@
+{#
+  A tabela de arquivos de uma rodada.
+
+  Existe separada porque a tela de resultado passou a desenhá-la DUAS vezes
+  quando a rodada retém arquivos: uma para os que ainda não encolheram, que é o
+  que sobrou para resolver, e outra — recolhida — para os que encolheram, que é
+  o registro do que foi feito.
+
+  Quem inclui define:
+    rows          as linhas a mostrar (uma fatia de `r.files`)
+    with_total    desenha a linha de total no rodapé
+    downloadable  cada linha ganha o link de baixar
+#}
+<div class="scroll">
+  <table class="files-table">
+    <thead>
+      <tr>
+        <th class="num">#</th>
+        <th>Arquivo</th>
+        {% if r.compressed %}<th class="num">Antes</th>{% endif %}
+        <th class="num">{{ 'Depois' if r.compressed else 'Tamanho' }}</th>
+        {% if r.compressed %}<th class="num">Economia</th>{% endif %}
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in rows %}
+        <tr{% if f.kept %} class="row--kept"{% endif %}>
+          <td class="num item-index">{{ loop.index }}</td>
+          <td class="file-name">{{ f.relative_path }}</td>
+          {% if r.compressed %}<td class="num">{{ f.before }}</td>{% endif %}
+          <td class="num">{{ f.after }}</td>
+          {% if r.compressed %}
+            {# Um "0%" aqui pareceria uma compressão que não rendeu. O que
+               houve foi outra coisa: o arquivo já estava bom. #}
+            {% if f.kept %}
+              <td class="num kept">original</td>
+            {% else %}
+              <td class="num {{ 'grew' if f.grew else 'shrank' }}">
+                {{ '+' if f.grew else '−' }}{{ f.savings }}
+              </td>
+            {% endif %}
+          {% endif %}
+          <td class="num">
+            {% if downloadable %}
+              {# `f.index` e não `loop.index0`: a posição aqui é a da fatia, e o
+                 link precisa da posição na rodada inteira. #}
+              <a class="link" href="{{ url_for('pdfc.download', ident=job.id, index=f.index) }}">baixar</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+    {% if with_total %}
+      <tfoot>
+        <tr>
+          <td></td>
+          <td>Total</td>
+          {% if r.compressed %}<td class="num">{{ r.before }}</td>{% endif %}
+          <td class="num">{{ r.after }}</td>
+          {% if r.compressed %}
+            <td class="num {{ 'grew' if r.grew else 'shrank' }}">
+              {{ '+' if r.grew else '−' }}{{ r.savings }}
+            </td>
+          {% endif %}
+          <td></td>
+        </tr>
+      </tfoot>
+    {% endif %}
+  </table>
+</div>

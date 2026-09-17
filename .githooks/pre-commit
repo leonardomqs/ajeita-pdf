@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# Bloqueia qualquer commit que inclua arquivos PDF.
+#
+# Este repositorio e publico e ja teve PDFs com dados pessoais no historico.
+# O .gitignore cobre o caso normal; este hook cobre o `git add -f` e o
+# arquivo que escapa por um caminho inesperado.
+
+pdfs=$(git diff --cached --name-only --diff-filter=ACMR | grep -i '\.pdf$')
+
+if [ -n "$pdfs" ]; then
+    echo "=========================================================="
+    echo "COMMIT BLOQUEADO: ha arquivo(s) PDF no stage."
+    echo "=========================================================="
+    echo "$pdfs" | sed 's/^/  - /'
+    echo
+    echo "PDFs nunca devem ser versionados neste projeto."
+    echo "Use as pastas input/ e output/, que sao ignoradas pelo git."
+    echo
+    echo "Para remover do stage:"
+    echo "  git restore --staged <arquivo>"
+    exit 1
+fi
+
+exit 0

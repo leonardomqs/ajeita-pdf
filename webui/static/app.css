@@ -1,0 +1,491 @@
+/* Aparência da interface.
+ *
+ * Tudo o que define a marca — cor, fonte, raio de borda — está nas variáveis
+ * abaixo. A identidade visual da equipe entra em `brand.css`, que é carregado
+ * depois e só redefine essas variáveis. Nenhum template precisa mudar.
+ *
+ * Daí a regra que este arquivo segue: nenhuma cor escrita à mão fora do bloco
+ * `:root`. Uma cor solta lá embaixo é exatamente a que sobrevive à troca de
+ * identidade e destoa de todo o resto.
+ */
+
+:root {
+  --ink:          #1c2530;
+  --ink-soft:     #5b6875;
+  --bg:           #f4f6f8;
+  --surface:      #ffffff;
+  --surface-alt:  #fafbfc;
+  --border:       #dfe4ea;
+  --border-firm:  #c9d1da;
+
+  --brand:        #1f3a5f;
+  --brand-light:  #2f5687;
+  --brand-ink:    #ffffff;
+  --brand-wash:   #eef3fa;
+
+  --ok:           #1b5e20;
+  --ok-bg:        #eaf4ec;
+  --warn:         #8a6100;
+  --warn-bg:      #fdf0d5;
+  --warn-bg-firm: #f8e6bc;
+  --error:        #9b1c1c;
+  --error-bg:     #fbe9e7;
+
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Cascadia Mono", Consolas, "SF Mono", monospace;
+
+  --radius: 8px;
+  --radius-small: 6px;
+  --shadow: 0 1px 2px rgba(28, 37, 48, .06), 0 4px 12px rgba(28, 37, 48, .05);
+  --focus: #2f5687;
+  --width: 900px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* Um anel de foco só, para tudo em que se clica. Antes só os campos tinham
+   contorno visível, e quem navega pelo teclado atravessava os botões às
+   cegas. `:focus-visible` e não `:focus`: o clique do mouse não acende. */
+:where(a, button, summary, label.button, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-small);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ----------------------------------------------------------------- topo */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+/* Sobre o fundo escuro, o azul do anel some. */
+.topbar :focus-visible { outline-color: currentColor; }
+
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+.brand-mark {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 3px solid currentColor; opacity: .9;
+}
+.brand-name { font-size: 18px; letter-spacing: .2px; }
+.brand-name b { font-weight: 700; }
+.topbar-note { margin-left: auto; font-size: 13px; opacity: .75; }
+
+.tabs { display: flex; gap: 4px; margin-left: 18px; }
+.tab {
+  padding: 6px 14px; border-radius: var(--radius-small);
+  color: inherit; text-decoration: none;
+  font-size: 14px; opacity: .75;
+  transition: background .12s, opacity .12s;
+}
+.tab:hover { background: rgba(255, 255, 255, .12); opacity: 1; }
+.tab--active { background: rgba(255, 255, 255, .18); opacity: 1; font-weight: 600; }
+
+.page { max-width: var(--width); margin: 28px auto 48px; padding: 0 24px; }
+
+h1 { font-size: 25px; letter-spacing: -.2px; margin: 0 0 8px; }
+h2 { font-size: 13px; margin: 0 0 14px; text-transform: uppercase;
+     letter-spacing: .7px; color: var(--ink-soft); }
+.lede { margin: 0 0 24px; color: var(--ink-soft); max-width: 62ch; }
+
+/* -------------------------------------------------------------- cartões */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px;
+  margin-bottom: 18px;
+}
+.card--error { border-left: 4px solid var(--error); }
+.card--warn  { border-left: 4px solid var(--warn); }
+.card p { margin: 0; max-width: 70ch; }
+/* O segundo parágrafo de um aviso: o primeiro diz o que houve, este diz o que
+   fazer a respeito. Separados porque quem já entendeu o primeiro pode parar
+   ali, e quem precisa agir vai direto ao segundo. */
+.card p + .card-more { margin-top: 10px; }
+
+details.card > summary { cursor: pointer; color: var(--ink-soft);
+                         font-size: 13px; text-transform: uppercase; letter-spacing: .6px; }
+details.card[open] > summary { margin-bottom: 14px; }
+
+/* --------------------------------------------------------------- campos */
+
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 16px; margin-bottom: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+.field--wide { grid-column: 1 / -1; }
+.label { font-weight: 600; font-size: 13px; }
+.hint { font-size: 12.5px; color: var(--ink-soft); }
+.muted { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--ink-soft); }
+
+select, input[type="text"], input[type="file"] {
+  font: inherit;
+  padding: 9px 10px;
+  border: 1px solid var(--border-firm);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  color: inherit;
+  transition: border-color .12s;
+}
+select:hover, input[type="text"]:hover { border-color: var(--brand-light); }
+select:focus-visible, input:focus-visible {
+  outline: 2px solid var(--focus); outline-offset: 1px; border-color: var(--brand-light);
+}
+input[type="text"]:disabled { background: var(--bg); color: var(--ink-soft); border-color: var(--border); }
+input[type="text"]:disabled:hover { border-color: var(--border); }
+
+.choice { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.choice input { width: 16px; height: 16px; accent-color: var(--brand); }
+
+.advanced { margin: 2px 0 18px; }
+.advanced > summary { cursor: pointer; font-size: 13px; color: var(--ink-soft); }
+.advanced > summary:hover { color: var(--brand-light); }
+.advanced[open] > summary { margin-bottom: 12px; }
+
+/* -------------------------------------------------------- área de soltar */
+
+/* O controle nativo de arquivo não tem como dizer "também aceito arrastados".
+   Esta área diz, e o input continua ali atrás — alcançável pelo teclado e
+   aberto pelo rótulo, para a página não depender do arrasto para funcionar. */
+.drop {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 22px 18px;
+  border: 2px dashed var(--border-firm);
+  border-radius: var(--radius);
+  background: var(--surface-alt);
+  text-align: center;
+  transition: border-color .12s, background .12s;
+}
+.drop--over { border-color: var(--brand-light); background: var(--brand-wash); }
+.drop .hint { max-width: 54ch; }
+
+/* Com o tipo no seletor de propósito: `input[type="file"]` lá em cima pesa
+   mais do que uma classe sozinha, e sem isto a largura e o preenchimento
+   daquela regra é que valeriam aqui. */
+input[type="file"].drop-input {
+  position: absolute; width: 1px; height: 1px; padding: 0; border: 0;
+  opacity: 0; pointer-events: none;
+}
+.drop-call { display: flex; align-items: center; justify-content: center;
+             gap: 12px; flex-wrap: wrap; margin: 0; }
+.drop-or { color: var(--ink-soft); font-size: 13px; }
+/* O foco vai para o input escondido; quem o mostra é o rótulo. */
+.drop-input:focus-visible + .drop-call .button {
+  outline: 2px solid var(--focus); outline-offset: 2px;
+}
+
+/* ------------------------------------------------- lista reordenável */
+
+.order-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+                 margin: 6px 0 8px; }
+
+/* O total fica ao lado dos botões da lista, e não no fim da página, porque a
+   pergunta que ele responde — "isto cabe?" — aparece enquanto a pessoa
+   escolhe, não na hora de enviar. */
+.order-total { margin-left: auto; font-size: 12px; color: var(--ink-soft);
+               font-variant-numeric: tabular-nums; }
+.order-total.over { color: var(--warn); font-weight: 700; }
+
+.file-list {
+  list-style: none; margin: 0; padding: 0;
+  border: 1px solid var(--border); border-radius: var(--radius-small);
+  background: var(--surface);
+  max-height: 340px; overflow-y: auto;
+  counter-reset: position;
+}
+
+.item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  cursor: grab;
+}
+.item:last-child { border-bottom: 0; }
+.item:hover { background: var(--surface-alt); }
+.item::before {
+  counter-increment: position;
+  content: counter(position);
+  min-width: 22px; text-align: right;
+  font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums;
+}
+.item.dragging { opacity: .4; }
+/* Uma linha no ponto de inserção, não um fundo colorido: o verde de antes era
+   o mesmo do "deu certo" e lia como confirmação, não como destino. */
+.item.drop-target { box-shadow: inset 0 2px 0 var(--brand-light); }
+
+.item-grip { color: var(--ink-soft); font-size: 13px; cursor: grab; }
+.item-name { flex: 1; font-family: var(--font-mono); font-size: 12px; word-break: break-all; }
+.item-size { font-size: 12px; color: var(--ink-soft); white-space: nowrap;
+             font-variant-numeric: tabular-nums; }
+
+.item-buttons { display: flex; gap: 2px; }
+.item-button {
+  font: inherit; font-size: 12px; line-height: 1;
+  width: 24px; height: 24px; padding: 0;
+  border: 1px solid var(--border); border-radius: 4px;
+  background: var(--surface); color: var(--ink); cursor: pointer;
+  transition: border-color .12s, color .12s;
+}
+.item-button:hover:not(:disabled) { border-color: var(--brand-light); color: var(--brand-light); }
+.item-button:disabled { opacity: .3; cursor: default; }
+.item-button.remove:hover { border-color: var(--error); color: var(--error); }
+
+/* ------------------------------------------------------ avisos do formulário */
+
+.notice {
+  margin: 12px 0 0; padding: 10px 14px;
+  border-radius: var(--radius-small); border-left: 4px solid;
+  font-size: 13.5px;
+}
+.notice--error { background: var(--error-bg); border-color: var(--error); color: var(--error); }
+.notice--warn  { background: var(--warn-bg);  border-color: var(--warn);  color: var(--warn); }
+
+/* ------------------------------------------------------ progresso do envio */
+
+.progress { margin: 14px 0 0; }
+.progress-track {
+  height: 8px; border-radius: 99px; overflow: hidden;
+  background: var(--bg); border: 1px solid var(--border);
+}
+.progress-fill {
+  display: block; height: 100%; width: 0;
+  background: var(--brand-light);
+  transition: width .15s linear;
+}
+/* Os bytes chegaram e agora é o Ghostscript: não há percentual a mostrar, e
+   inventar um seria pior do que assumir a espera. A barra passa a só dizer
+   que ainda está vivo. */
+.progress--working .progress-fill {
+  width: 100%;
+  background: linear-gradient(90deg,
+    var(--border) 0 35%, var(--brand-light) 35% 65%, var(--border) 65% 100%);
+  background-size: 250% 100%;
+  animation: progress-slide 1.2s linear infinite;
+  transition: none;
+}
+@keyframes progress-slide {
+  from { background-position: 100% 0; }
+  to   { background-position: -100% 0; }
+}
+.progress-note { margin: 7px 0 0; font-size: 12.5px; color: var(--ink-soft);
+                 font-variant-numeric: tabular-nums;
+                 display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+
+/* Esta linha não é texto para ler, e sim uma régua: precisa da largura da
+   barra que descreve. `.card p` limita todo parágrafo de cartão a 70ch — ótimo
+   para um parágrafo, e aqui o efeito era o percentual alinhar-se à direita de
+   uma caixa invisível, bem antes da ponta da barra.
+   Com o tipo no seletor de propósito: `.card p` pesa mais do que uma classe
+   sozinha, e sem ele esta regra não valeria. */
+.card p.progress-note { max-width: none; }
+.progress-note strong { color: var(--ink); font-size: 13px; }
+
+/* O nome do arquivo em curso, em fonte de código como no resto do programa.
+   Inteiro, quebrando se precisar: cortar com reticências esconderia justamente
+   o fim do caminho, que é o que distingue "lote/2024/ata_07.pdf" do seguinte. */
+/* `flex-grow: 0`: crescendo, ele engoliria o espaço livre e o `margin-left`
+   do percentual não teria o que empurrar — o número acabava colado no nome do
+   arquivo, em vez de alinhado à ponta da barra. */
+.progress-detail {
+  flex: 0 1 auto; min-width: 0;
+  font-family: var(--font-mono); font-size: 12px;
+  word-break: break-all;
+}
+.progress-percent { margin-left: auto; flex: none; font-weight: 700; color: var(--ink); }
+
+/* ------------------------------------------------- a lista em andamento */
+
+.andamento-note { margin-top: 12px; }
+
+/* Mais baixa que a do resultado: aqui a lista divide a tela com a barra e com
+   o texto de espera, e uma tabela de oitenta linhas empurraria tudo para fora. */
+.scroll--andamento { max-height: 46vh; margin-top: 16px; }
+
+/* Os três estados de uma linha. A diferença entre eles é de PESO, não de cor:
+   um lote em andamento tem as três ao mesmo tempo, e três cores lado a lado
+   competiriam com a economia, que é a coluna que a pessoa veio ler. */
+.row--pending td { color: var(--ink-soft); }
+.row--pending .file-name { opacity: .65; }
+.row--done .file-name { color: var(--ink); }
+
+.row--working td { background: var(--brand-wash) !important; }
+.row--working .file-name { font-weight: 700; }
+/* A barra à esquerda marca a linha de agora sem precisar de cor de fundo forte
+   — some junto com o estado, e não deixa a tabela listrada de azul. */
+.row--working td:first-child { box-shadow: inset 3px 0 0 var(--brand-light); }
+
+.row-mark { font-size: 11px; color: var(--ink-soft); white-space: nowrap;
+            text-transform: lowercase; letter-spacing: .2px; }
+.row--working .row-mark { color: var(--brand-light); font-weight: 700; }
+.row--done .row-mark { color: var(--ok); }
+
+/* --------------------------------------------------------------- botões */
+
+.actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
+.actions--save { align-items: flex-end; margin-top: 18px; }
+.actions--save .field { flex: 1 1 340px; margin-bottom: 0; }
+
+/* Tentar de novo nos que não encolheram. Em âmbar, como as linhas a que se
+   refere: é o que liga os dois — quem vê a tabela acesa procura aqui o que
+   fazer com ela. */
+.retry {
+  display: flex; flex-direction: column; gap: 8px;
+  margin-top: 20px; padding: 14px 16px;
+  border-radius: var(--radius-small);
+  border-left: 4px solid var(--warn);
+  background: var(--warn-bg);
+}
+.retry .label { color: var(--warn); }
+.retry .hint { max-width: 70ch; }
+.retry-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.retry-row select { flex: 0 1 280px; }
+
+/* "Já levada". Toma o lugar do botão sem o peso dele: a ação principal daqui
+   para a frente é a nova tentativa, não repetir um download já feito. */
+.taken { margin: 0; font-size: 13.5px; color: var(--ok); font-weight: 600; }
+.taken .link { margin-left: 8px; font-weight: 500; color: var(--ink-soft); }
+.taken .link:hover { color: var(--brand-light); }
+
+.button {
+  display: inline-block;
+  font: inherit; font-weight: 600;
+  padding: 10px 18px;
+  border: 1px solid var(--border-firm);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color .12s, background .12s, transform .06s;
+}
+.button:hover { border-color: var(--brand-light); background: var(--surface-alt); }
+.button:active:not(:disabled) { transform: translateY(1px); }
+.button:disabled { opacity: .6; cursor: progress; transform: none; }
+.button--primary {
+  background: var(--brand); border-color: var(--brand); color: var(--brand-ink);
+}
+.button--primary:hover { background: var(--brand-light); border-color: var(--brand-light); }
+.button--quiet { background: transparent; }
+.button--quiet:hover { background: var(--surface); }
+/* Depois de `.button`, e não antes: sem `!important` nem seletor mais
+   específico, a regra que vem por último é a que vale — e enquanto este
+   modificador ficava lá em cima, os botões "pequenos" da lista saíam do
+   tamanho de um botão comum. */
+.button--small { padding: 4px 10px; font-size: 12px; font-weight: 500; }
+
+.link { color: var(--brand-light); text-decoration: none; font-weight: 600; }
+.link:hover { text-decoration: underline; }
+
+/* ------------------------------------------------------------- veredito */
+
+.verdict {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 16px 20px; margin-bottom: 18px;
+  border-radius: var(--radius); border-left: 5px solid;
+}
+.verdict strong { font-size: 17px; letter-spacing: -.1px; }
+.verdict span { font-size: 13px; opacity: .85; }
+.verdict--ok    { background: var(--ok-bg);    border-color: var(--ok);    color: var(--ok); }
+.verdict--warn  { background: var(--warn-bg);  border-color: var(--warn);  color: var(--warn); }
+.verdict--error { background: var(--error-bg); border-color: var(--error); color: var(--error); }
+
+.flash { padding: 12px 16px; border-radius: var(--radius-small); margin: 0 0 16px; }
+.flash--ok    { background: var(--ok-bg);    color: var(--ok); }
+.flash--error { background: var(--error-bg); color: var(--error); }
+
+/* -------------------------------------------------------------- tabelas */
+
+/* A altura máxima é o que torna o cabeçalho fixo útil: num lote de trinta
+   arquivos, rolar até o fim deixava as colunas "Antes" e "Depois" para trás,
+   e os números viravam três colunas sem nome. */
+.scroll { overflow-x: auto; max-height: 70vh; overflow-y: auto; border-radius: var(--radius-small); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+
+/* Uma largura mínima, e a rolagem lateral que o `.scroll` já oferecia.
+   Sem ela, numa tela estreita a coluna do nome se espremia a uns poucos
+   caracteres e o `word-break` quebrava o caminho letra por letra: cada linha
+   virava um bloco de dez linhas de altura, e a lista deixava de ser uma lista.
+   É melhor arrastar de lado do que rolar meia tela por arquivo. */
+.files-table { min-width: 520px; }
+
+.files-table th {
+  text-align: left; padding: 8px 10px; white-space: nowrap;
+  background: var(--brand); color: var(--brand-ink); font-size: 12px;
+  position: sticky; top: 0; z-index: 1;
+}
+.files-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+.files-table tbody tr:nth-child(even) td { background: var(--surface-alt); }
+.files-table tbody tr:hover td { background: var(--brand-wash); }
+
+/* Os que não encolheram, na tabela própria deles: o fundo âmbar amarra a
+   tabela ao cartão que a explica e ao bloco de nova tentativa logo abaixo.
+   Sem barrinha por linha — ali todas as linhas são iguais, e marcar cada uma
+   seria repetir o que a tabela inteira já diz.
+   O seletor cita `tbody tr` e a classe porque precisa pesar mais que o
+   `:nth-child(even)` acima; só `.row--kept td` perderia nas linhas pares. */
+.files-table tbody tr.row--kept td { background: var(--warn-bg); }
+.files-table tbody tr.row--kept:hover td { background: var(--warn-bg-firm); }
+.files-table tbody tr.row--kept .file-name { color: var(--ink); }
+.file-name { font-family: var(--font-mono); font-size: 12px; word-break: break-all; }
+.files-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.files-table th.num { text-align: right; }
+.files-table .item-index { width: 34px; color: var(--ink-soft); }
+.files-table tfoot td { font-weight: 700; border-top: 2px solid var(--border-firm); border-bottom: 0; }
+.files-table tfoot tr td, .files-table tfoot tr:hover td { background: var(--surface); }
+
+.shrank { color: var(--ok); font-weight: 600; }
+.grew   { color: var(--warn); font-weight: 600; }
+/* Nem verde nem âmbar: o arquivo saiu intacto, que não é ganho nem problema.
+   Pintá-lo de verde venderia uma economia que não houve; de âmbar, acusaria
+   uma falha que também não houve. */
+.kept   { color: var(--ink-soft); font-weight: 500; font-style: italic; }
+
+.error-message { font-size: 15px; margin: 0 0 10px; }
+.error-hint { font-family: var(--font-mono); font-size: 12.5px; white-space: pre-wrap;
+              margin: 0; color: var(--ink-soft); }
+
+/* -------------------------------------------------------------- rodapé */
+
+.footer { max-width: var(--width); margin: 0 auto; padding: 0 24px 32px;
+          font-size: 12px; color: var(--ink-soft); }
+.footer p { margin: 0; max-width: 70ch; }
+/* O crédito é uma linha a menos que a nota: presente para quem procurar,
+   invisível para quem não estiver procurando. */
+.footer .footer-credit { margin-top: 6px; font-size: 11.5px; opacity: .7; }
+.footer-link { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.footer-link:hover { color: var(--brand-light); }
+
+@media (max-width: 640px) {
+  .topbar { flex-wrap: wrap; gap: 10px; padding: 12px 16px; }
+  .tabs { margin-left: 0; width: 100%; }
+  .tab { flex: 1; text-align: center; }
+  .topbar-note { display: none; }
+  .page { padding: 0 16px; margin-top: 20px; }
+  .card { padding: 18px 16px; }
+  .footer { padding: 0 16px 28px; }
+  .actions--save { flex-direction: column; align-items: stretch; }
+  .order-total { margin-left: 0; width: 100%; }
+}

@@ -1,0 +1,30 @@
+[project]
+name = "ajeita-pdf"
+version = "0.1.0"
+description = "Comprime, junta e gira PDFs em lote — pelo navegador ou pela linha de comando"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pypdf2>=3.0.1",
+]
+
+[project.scripts]
+ajeita-pdf = "cli:main"
+
+[dependency-groups]
+# A interface de navegador é OPCIONAL: quem usa só o terminal não precisa de um
+# servidor web instalado para comprimir um PDF. O `executar\instalar.bat`
+# instala este grupo, porque quem chega pelo duplo clique vem pela tela.
+interface = [
+    "flask>=3.0,<4.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+only-include = ["cli.py", "service.py", "webui"]
+# Os templates e os arquivos estáticos são parte do pacote: sem isto a
+# interface funciona no repositório e quebra quando instalada.
+artifacts = ["webui/templates/*", "webui/static/*"]

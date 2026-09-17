@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Não deu para processar · ajeita-pdf{% endblock %}
+
+{% block content %}
+<div class="verdict verdict--error">
+  <strong>Não deu para processar</strong>
+  <span>nenhum arquivo foi alterado</span>
+</div>
+
+<section class="card card--error">
+  {# A mensagem e a sugestão vêm do `PdfError` do serviço: cada uma já diz o
+     que aconteceu e o que fazer. A tela não reescreve nenhuma — se a mensagem
+     estiver ruim, o lugar de melhorar é lá, e o terminal melhora junto. #}
+  <p class="error-message">{{ title }}</p>
+  {% if hint %}<pre class="error-hint">{{ hint }}</pre>{% endif %}
+</section>
+
+<p class="actions">
+  <a class="button button--primary" href="{{ url_for('pdfc.index') }}">Tentar de novo</a>
+</p>
+{% endblock %}

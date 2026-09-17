@@ -1,0 +1,16 @@
+{#
+  O que o formulário tem a dizer na hora de enviar: o impedimento (antes) e o
+  progresso (durante). Igual nas duas telas, e por isso aqui.
+
+  Ambos nascem escondidos e são acesos pelo `static/upload.js`. Sem JavaScript
+  nenhum deles aparece — e nem precisa: o envio nativo volta a valer, e quem
+  valida é o servidor.
+#}
+<p class="notice notice--error" id="form-error" hidden></p>
+
+<div class="progress" id="progress" hidden>
+  <div class="progress-track">
+    <span class="progress-fill" id="progress-fill"></span>
+  </div>
+  <p class="progress-note" id="progress-note"></p>
+</div>

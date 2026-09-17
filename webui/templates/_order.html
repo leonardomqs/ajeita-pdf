@@ -1,0 +1,38 @@
+{#
+  A lista de arquivos escolhidos: reordenável, e agora também a própria
+  seleção. Incluída pelas duas telas — comprimir e juntar — e movida por
+  `static/selection.js`.
+
+  Quem inclui pode definir `order_hint` com uma frase própria; o resto é igual
+  nos dois lugares de propósito, porque é a mesma lista.
+#}
+<div class="field field--wide" id="list-block" data-limit="{{ max_upload_bytes }}" hidden>
+  <span class="label">
+    Ordem dos arquivos <span class="muted" id="count"></span>
+  </span>
+  <span class="hint">
+    {{ order_hint|default("Arraste para reordenar, ou use as setas. É esta a ordem
+       em que os arquivos entram no PDF juntado.") }}
+  </span>
+
+  <div class="order-actions">
+    <button type="button" class="button button--small" id="sort-name">Ordenar por nome</button>
+    <button type="button" class="button button--small" id="reverse">Inverter</button>
+    {# Só aparece quando o `upload.js` assumiu o envio: sem ele, a lista não é
+       quem manda os arquivos, e limpá-la não tiraria nada do envio. #}
+    <button type="button" class="button button--small" id="clear" hidden>Limpar a lista</button>
+    <span class="order-total" id="total"></span>
+  </div>
+
+  <ol class="file-list" id="list"></ol>
+
+  {# O limite existe no servidor desde sempre; o que faltava era dizê-lo ANTES.
+     Passar dele significava esperar o envio inteiro para receber um erro que
+     já se sabia no momento em que o arquivo entrou na lista. #}
+  <p class="notice notice--warn" id="over-limit" hidden>
+    Os arquivos passam do limite de {{ max_upload_mb }} MB que o servidor aceita de
+    uma vez. Tire alguns da lista e mande o resto numa segunda leva.
+  </p>
+
+  <input type="hidden" name="order" id="order">
+</div>

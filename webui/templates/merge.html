@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Juntar PDFs · ajeita-pdf{% endblock %}
+
+{% block content %}
+<h1>Juntar PDFs</h1>
+<p class="lede">
+  Vários PDFs viram um só, na ordem que você definir. Nada é recomprimido: as
+  páginas entram exatamente como estão nos arquivos originais.
+</p>
+
+<form class="card" method="post" action="{{ url_for('pdfc.run_merge') }}"
+      enctype="multipart/form-data" id="form">
+
+  <div class="field field--wide">
+    <span class="label">Arquivos PDF</span>
+    <div class="drop" data-drop>
+      <input type="file" name="pdfs" id="pdfs" data-files multiple
+             accept=".pdf,application/pdf" class="drop-input">
+      <p class="drop-call">
+        <label class="button" for="pdfs">Escolher arquivos…</label>
+        <span class="drop-or">ou arraste os PDFs para cá</span>
+      </p>
+      <span class="hint">
+        Escolha dois ou mais: segure Ctrl ao clicar, ou Ctrl+A para marcar
+        todos. Escolher de novo soma à lista, não a substitui.
+      </span>
+    </div>
+  </div>
+
+  <details class="advanced">
+    <summary>ou enviar uma pasta inteira, com subpastas</summary>
+    <label class="field field--wide">
+      <span class="label">Pasta</span>
+      <input type="file" name="folder" id="folder" data-files
+             webkitdirectory directory multiple>
+      <span class="hint">
+        Todo PDF dentro dela entra na junção. O que não for PDF é ignorado.
+        Arrastar a pasta para a área acima faz o mesmo.
+      </span>
+    </label>
+  </details>
+
+  {% set order_hint = "Arraste para reordenar, ou use as setas. É nesta ordem que as
+     páginas entram no arquivo final — confira antes de juntar." %}
+  {% include "_order.html" %}
+
+  <label class="field field--wide">
+    <span class="label">Nome do arquivo final</span>
+    <input type="text" name="merge_name" id="merge_name" placeholder="juntado.pdf">
+    <span class="hint">Sem preencher, sai como <code>juntado.pdf</code>.</span>
+  </label>
+
+  {% include "_status.html" %}
+
+  <div class="actions">
+    <button class="button button--primary" type="submit" id="submit"
+            data-busy="Juntando…">Juntar</button>
+    <span class="hint">Nada é salvo ainda: você vê o resultado antes de baixar.</span>
+  </div>
+</form>
+
+<p class="hint">
+  Precisa também comprimir ou girar? A tela de
+  <a class="link" href="{{ url_for('pdfc.index') }}">comprimir</a> faz as três coisas
+  numa passada só.
+</p>
+
+<script src="{{ url_for('static', filename='selection.js') }}"></script>
+<script src="{{ url_for('static', filename='upload.js') }}"></script>
+<script>
+  window.Upload.check(() => {
+    // Juntar um arquivo só devolveria uma cópia dele com outro nome. Melhor
+    // dizer isso aqui do que entregar um "resultado" que não é junção nenhuma.
+    if (window.SelectedFiles.count() < 2) return "Escolha pelo menos DOIS PDFs para juntar.";
+    return null;
+  });
+</script>
+{% endblock %}

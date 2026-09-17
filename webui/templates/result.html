@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% block title %}Resultado · ajeita-pdf{% endblock %}
+
+{% block content %}
+<div class="verdict verdict--{{ r.tone }}">
+  <strong>{{ r.verdict }}</strong>
+  <span>
+    {% if r.kept %}{{ r.smaller }} de {{ r.count }} encolheram
+    {%- else %}{{ r.count }} arquivo(s){% endif %} ·
+    {% if r.compressed %}{{ r.before }} → {{ r.after }} · {{ r.level_name }}
+    {%- else %}{{ r.after }} · {{ r.level_name }}{% endif %}
+    {%- if r.rotated %} · {{ r.rotation_name }}{% endif %}
+    {%- if r.merged_name %} · juntados em {{ r.merged_name }}{% endif %}
+  </span>
+</div>
+
+{# O aviso deixou de explicar um arquivo maior e passou a explicar um arquivo
+   INTACTO: a rodada não entrega mais nada que tenha crescido — quando comprimir
+   piora, o original é que vai para a saída. O que restava era dizer isso, e o
+   que fazer se a pessoa precisa reduzir mesmo assim. #}
+{% if r.kept %}
+  <section class="card card--warn">
+    <h2>{{ 'Nada a ganhar aqui' if r.nothing_gained else 'Alguns saíram como entraram' }}</h2>
+    <p>
+      {% if r.kept == 1 %}
+        Um destes PDFs já estava otimizado: comprimi-lo deixaria o arquivo
+        <strong>maior</strong> do que era.
+      {% else %}
+        {{ r.kept }} destes PDFs já estavam otimizados: comprimi-los deixaria os
+        arquivos <strong>maiores</strong> do que eram.
+      {% endif %}
+      {% if r.holds_back %}
+        Por isso {{ 'ele não entra' if r.kept == 1 else 'eles não entram' }} na
+        entrega: o que sairia daqui seria uma cópia do que você já tem. O que
+        você baixar ou salvar é só o que a rodada conseguiu melhorar.
+        {% if r.stronger %}
+          {{ 'Ele está logo abaixo' if r.kept == 1 else 'Eles estão logo abaixo' }},
+          esperando outra tentativa.
+        {% else %}
+          {{ 'Ele está listado abaixo' if r.kept == 1 else 'Eles estão listados abaixo' }},
+          para você saber quais foram.
+        {% endif %}
+      {% else %}
+        Em vez de entregar uma versão pior, a rodada manteve
+        {{ 'o original' if r.kept == 1 else 'os originais' }} — e aplicou o giro
+        que você pediu sobre {{ 'ele' if r.kept == 1 else 'eles' }}, que é o que
+        faz {{ 'dele' if r.kept == 1 else 'deles' }} uma entrega mesmo sem ter
+        encolhido.
+      {% endif %}
+    </p>
+    {# A sugestão só cita níveis que comprimem MAIS do que o que foi usado:
+       mandar tentar "Leitura em tela" quem acabou de rodar em "Menor arquivo"
+       é o jeito mais rápido de um conselho perder a credibilidade. #}
+    <p class="card-more">
+      {% if r.stronger %}
+        Se precisa reduzir de qualquer jeito, tente
+        {% for _, name in r.stronger %}<strong>{{ name }}</strong>
+        {%- if not loop.last %} ou {% endif %}{% endfor %}:
+        {{ 'eles diminuem' if r.stronger|length > 1 else 'ele diminui' }} a
+        resolução das imagens, que é de onde o tamanho vem, e aí há o que
+        economizar. O preço é a imagem perder definição se for ampliada.
+        Dá para fazer isso aqui embaixo, sem enviar nada de novo.
+      {% else %}
+        Você já usou <strong>{{ r.level_name }}</strong>, que é o nível que mais
+        comprime. Por este caminho não há mais o que reduzir nestes arquivos —
+        o tamanho deles não está em imagens que dê para encolher.
+      {% endif %}
+    </p>
+  </section>
+{% endif %}
+
+
+{% if r.kept %}
+  {# A tela passou a ser a lista do que AINDA não encolheu: é o que sobrou para
+     resolver, e é aqui que a segunda tentativa mora — junto da lista sobre a
+     qual ela age, e não no fim da página. #}
+  <section class="card card--warn">
+    <h2>Ainda não encolheram ({{ r.kept }})</h2>
+    {% set rows = r.files | selectattr('kept') | list %}
+    {% set with_total = false %}
+    {# Sem link de baixar quando a rodada os retém: seria a cópia do que a
+       pessoa já tem. Com giro, eles são entrega e o link fica. #}
+    {% set downloadable = not r.holds_back %}
+    {% include "_files.html" %}
+
+    {# Só quando há um nível MAIS FORTE para tentar. No nível que mais comprime,
+       o botão repetiria a rodada que acabou de não render — e a tela estaria
+       oferecendo, logo abaixo de "não há mais o que reduzir", exatamente o que
+       ela mesma disse não adiantar. #}
+    {% if r.stronger %}
+    <form class="retry" method="post" action="{{ url_for('pdfc.retry', ident=job.id) }}">
+      <span class="label">
+        tentar de novo {{ 'neste arquivo' if r.kept == 1 else 'nestes %d arquivos' % r.kept }},
+        com outro nível
+      </span>
+      <div class="retry-row">
+        <select name="level" aria-label="Nível de compressão para a nova tentativa">
+          {% for code, name in r.levels %}
+            <option value="{{ code }}" {% if code == r.retry_level %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+        <button class="button" type="submit">Tentar de novo</button>
+      </div>
+      <span class="hint">
+        Nada é enviado outra vez — os arquivos que você mandou continuam aqui.
+        {%- if r.rotated %} O giro que você pediu ({{ r.rotation_name|lower }}) vai junto.{% endif %}
+        Sai uma rodada nova, e esta continua valendo no endereço dela.
+      </span>
+    </form>
+    {% endif %}
+  </section>
+
+  {# O registro do que deu certo, recolhido: quem tem trabalho pendente na tela
+     não veio conferir o que já está resolvido — mas perder o quanto cada um
+     economizou seria jogar fora a única medida que a rodada produziu.
+
+     Depois de levada, a entrega some daqui: ela deixou de ser o que falta
+     fazer e virou coisa do passado. O que sobra na tela é o que sobrou mesmo. #}
+  {% if r.smaller and not r.collected %}
+    <details class="card">
+      <summary>
+        ver {{ 'o arquivo que encolheu' if r.smaller == 1 else 'os %d arquivos que encolheram' % r.smaller }}
+        {%- if r.carried %}
+          <span class="muted">— {{ r.carried }} {{ 'veio' if r.carried == 1 else 'vieram' }} de uma tentativa anterior</span>
+        {%- endif %}
+      </summary>
+      {% set rows = r.files | rejectattr('kept') | list %}
+      {% set with_total = true %}
+      {% set downloadable = true %}
+      {% include "_files.html" %}
+    </details>
+  {% endif %}
+
+{% else %}
+  {# Vindo da tela de juntar, a lista dos arquivos que entraram é conferência,
+     não resultado: fica recolhida. Nas outras rodadas ela É o resultado. #}
+  {% if r.merge_only %}
+  <details class="card">
+    <summary>Os {{ r.count }} arquivos que entraram, nesta ordem</summary>
+  {% else %}
+  <section class="card">
+    <h2>
+      Os arquivos
+      {% if r.merged_name %}
+        <span class="muted">— nesta ordem dentro de {{ r.merged_name }}</span>
+      {% endif %}
+    </h2>
+  {% endif %}
+    {% set rows = r.files %}
+    {% set with_total = true %}
+    {% set downloadable = true %}
+    {% include "_files.html" %}
+  {% if r.merge_only %}</details>{% else %}</section>{% endif %}
+{% endif %}
+
+
+<section class="card card--actions">
+  <h2>O que fazer com o resultado</h2>
+
+  {# Quando houve junção, o arquivo juntado é o que a pessoa veio buscar: ele
+     vira o botão principal, e os separados ficam como segunda opção. #}
+  <div class="actions">
+    {% if r.merged_name %}
+      <a class="button button--primary" href="{{ url_for('pdfc.download_merged', ident=job.id) }}">
+        Baixar {{ r.merged_name }} ({{ r.merged_size }})
+      </a>
+      {% if r.smaller > 1 %}
+        <a class="button" href="{{ url_for('pdfc.download_all', ident=job.id) }}">
+          Baixar os separados (.zip)
+        </a>
+      {% endif %}
+    {% elif r.holds_back %}
+      {# A entrega é o que melhorou. O resto está na lista acima, esperando uma
+         segunda tentativa — não um download. #}
+      {% if r.collected %}
+        {# Já levada. O botão sai da frente, mas a porta não fecha: um GET não
+           prova que o arquivo chegou ao disco de ninguém, e quem cancelou o
+           download sem querer não deveria ter de rodar tudo outra vez. #}
+        <p class="taken">
+          ✓ {{ 'O arquivo que encolheu foi baixado' if r.smaller == 1
+               else 'Os %d arquivos que encolheram foram baixados' % r.smaller }}.
+          <a class="link" href="{{ url_for('pdfc.download_all', ident=job.id) }}">baixar de novo</a>
+        </p>
+      {% elif r.smaller > 1 %}
+        <a class="button button--primary" href="{{ url_for('pdfc.download_all', ident=job.id) }}">
+          Baixar os {{ r.smaller }} que encolheram (.zip)
+        </a>
+      {% elif r.smaller == 1 %}
+        {% set only = (r.files | rejectattr('kept') | list)[0] %}
+        <a class="button button--primary"
+           href="{{ url_for('pdfc.download', ident=job.id, index=only.index) }}">
+          Baixar {{ only.relative_path }}
+        </a>
+      {% endif %}
+    {% elif r.count > 1 %}
+      <a class="button button--primary" href="{{ url_for('pdfc.download_all', ident=job.id) }}">
+        Baixar todos (.zip)
+      </a>
+    {% else %}
+      <a class="button button--primary" href="{{ url_for('pdfc.download', ident=job.id, index=0) }}">
+        Baixar {{ r.files[0].relative_path }}
+      </a>
+    {% endif %}
+  </div>
+
+  {% if (r.smaller and not r.collected) or r.merged_name %}
+    <form class="actions actions--save" method="post"
+          action="{{ url_for('pdfc.save', ident=job.id) }}">
+      <label class="field field--wide">
+        <span class="label">
+          {%- if r.holds_back %}
+            ou salvar {{ 'o que encolheu' if r.smaller == 1 else 'os %d que encolheram' % r.smaller }}
+            direto nesta pasta da máquina
+          {%- else %}
+            ou salvar direto nesta pasta da máquina
+          {%- endif %}
+        </span>
+        <input type="text" name="folder" value="{{ suggested_dir }}">
+      </label>
+      <button class="button" type="submit">Salvar</button>
+    </form>
+  {% elif not r.collected %}
+    {# Nada encolheu: não há arquivo novo para levar a lugar nenhum. Dizer isso
+       é melhor do que oferecer um botão que copiaria o que já existe. #}
+    <p class="hint">
+      Não há nada para baixar nem salvar: todos os arquivos já estavam
+      otimizados, e você continua com eles.
+      {%- if r.stronger %} Tente de novo acima, num nível mais forte, se precisa
+      mesmo reduzir.{% endif %}
+    </p>
+  {% else %}
+    <p class="hint">
+      A entrega desta rodada já foi levada.
+      {%- if r.stronger %} Tentando de novo acima, o que encolher entra numa
+      lista nova — e você baixa de uma vez só no fim.{% endif %}
+    </p>
+  {% endif %}
+</section>
+
+<p class="actions">
+  <a class="button button--quiet" href="{{ url_for('pdfc.index') }}">Comprimir outros</a>
+</p>
+
+<p class="hint">
+  Os arquivos desta rodada ficam disponíveis por algumas horas e depois são
+  apagados da pasta temporária. Baixe ou salve o que for usar.
+</p>
+{% endblock %}

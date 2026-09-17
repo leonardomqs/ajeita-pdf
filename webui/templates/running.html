@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Processando · ajeita-pdf{% endblock %}
+
+{#
+  O recarregar automático fica dentro de <noscript> de propósito: com o
+  JavaScript ligado quem atualiza o andamento é o `progress.js`, trocando só o
+  pedaço que mudou, e um <meta refresh> disputaria com ele — recarregando a
+  tela inteira a cada dois segundos por cima de uma lista que já estava se
+  preenchendo sozinha.
+
+  Sem JavaScript ele é o andamento: a página volta a cada dois segundos com a
+  lista mais um pouco preenchida, e no fim já vem o resultado. Menos vivo, e a
+  mesma informação — inclusive a lista, que é desenhada no servidor.
+#}
+{% block head %}
+  <noscript><meta http-equiv="refresh" content="2"></noscript>
+{% endblock %}
+
+{% block content %}
+<h1>Processando</h1>
+<p class="lede">
+  Os arquivos já chegaram e estão sendo trabalhados nesta máquina. Pode deixar
+  esta página aberta — o resultado aparece aqui mesmo quando terminar.
+</p>
+
+<section class="card" id="running"
+         data-progress="{{ url_for('pdfc.progress', ident=job.id) }}">
+  {% include "_progress.html" %}
+</section>
+
+<p class="hint">
+  Fechar esta janela não cancela nada — a rodada termina de qualquer jeito, e o
+  endereço desta página continua valendo por algumas horas.
+</p>
+
+<script src="{{ url_for('static', filename='progress.js') }}"></script>
+{% endblock %}

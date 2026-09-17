@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Comprimir PDFs · ajeita-pdf{% endblock %}
+
+{% block content %}
+<h1>Comprimir PDFs</h1>
+<p class="lede">
+  Escolha os arquivos e diga o que fazer com eles: comprimir, girar, juntar num
+  só — ou qualquer combinação. Nada é enviado para a internet: tudo acontece
+  nesta máquina.
+</p>
+
+<form class="card" method="post" action="{{ url_for('pdfc.process') }}"
+      enctype="multipart/form-data" id="form">
+
+  {# O input fica escondido atrás do próprio rótulo: o controle nativo não diz
+     que também aceita arquivos arrastados, e é o arrasto que evita a viagem
+     até a caixa de diálogo. Escondido por CSS, não por `hidden` — continua
+     alcançável pelo teclado, e sem JavaScript o rótulo ainda o abre. #}
+  <div class="field field--wide">
+    <span class="label">Arquivos PDF</span>
+    <div class="drop" data-drop>
+      <input type="file" name="pdfs" id="pdfs" data-files multiple
+             accept=".pdf,application/pdf" class="drop-input">
+      <p class="drop-call">
+        <label class="button" for="pdfs">Escolher arquivos…</label>
+        <span class="drop-or">ou arraste os PDFs para cá</span>
+      </p>
+      <span class="hint">
+        Pode escolher vários de uma vez: segure Ctrl ao clicar, ou Ctrl+A para
+        marcar todos. Escolher de novo soma à lista, não a substitui.
+      </span>
+    </div>
+  </div>
+
+  {# O envio de pasta é a mesma promessa que a pasta `input/` cumpre na linha
+     de comando: a saída espelha a estrutura que entrou. Fica num <details>
+     porque é o caso menos comum, e porque o seletor de pastas do navegador
+     assusta com um aviso de "enviar N arquivos" que o de arquivos não tem —
+     motivo, aliás, para arrastar a pasta ser o caminho mais macio. #}
+  <details class="advanced">
+    <summary>ou enviar uma pasta inteira, com subpastas</summary>
+    <label class="field field--wide">
+      <span class="label">Pasta</span>
+      <input type="file" name="folder" id="folder" data-files
+             webkitdirectory directory multiple>
+      <span class="hint">
+        Todo PDF encontrado dentro dela é processado, e o resultado mantém a
+        mesma divisão de subpastas. O que não for PDF é ignorado. Arrastar a
+        pasta para a área acima faz o mesmo.
+      </span>
+    </label>
+  </details>
+
+  {# A lista aparece sempre, não só quando há junção: é também a confirmação do
+     que foi selecionado, que num envio de pasta é a única forma de a pessoa
+     ver o que está prestes a mandar. #}
+  {% include "_order.html" %}
+
+  <div class="fields">
+    <label class="field">
+      <span class="label">Compressão</span>
+      <select name="level" id="level">
+        <option value="{{ no_compression }}">Não comprimir</option>
+        {% for code, name, _ in levels %}
+          <option value="{{ code }}" {% if code == default_level %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+      <span class="hint" id="level-hint"></span>
+    </label>
+
+    <label class="field">
+      <span class="label">Girar as páginas</span>
+      <select name="rotate" id="rotate">
+        {% for degrees, name in rotations %}
+          <option value="{{ degrees }}">{{ name }}</option>
+        {% endfor %}
+      </select>
+      <span class="hint">Útil quando o scanner inverte a folha.</span>
+    </label>
+  </div>
+
+  <div class="field field--wide">
+    <span class="choice">
+      <input type="checkbox" name="merge" id="merge" value="1">
+      <span>Juntar tudo num PDF só</span>
+    </span>
+    <input type="text" name="merge_name" id="merge_name"
+           placeholder="juntado.pdf" disabled>
+    <span class="hint">
+      Os arquivos entram na ordem da lista acima. Se é só isso que você quer,
+      a tela de <a class="link" href="{{ url_for('pdfc.merge') }}">juntar</a>
+      é mais direta.
+    </span>
+  </div>
+
+  {% include "_status.html" %}
+
+  <div class="actions">
+    <button class="button button--primary" type="submit" id="submit"
+            data-busy="Processando…">Processar</button>
+    <span class="hint">Nada é salvo ainda: você vê o resultado antes de decidir.</span>
+  </div>
+</form>
+
+<script src="{{ url_for('static', filename='selection.js') }}"></script>
+<script src="{{ url_for('static', filename='upload.js') }}"></script>
+<script>
+  const HINTS = {
+    {% for code, _, hint in levels %}{{ code }}: {{ hint|tojson }},{% endfor %}
+    {{ no_compression|tojson }}: "Copia os arquivos como estão. Não precisa do Ghostscript instalado."
+  };
+
+  const level = document.getElementById("level");
+  const rotate = document.getElementById("rotate");
+  const merge = document.getElementById("merge");
+  const mergeName = document.getElementById("merge_name");
+
+  function describeLevel() {
+    document.getElementById("level-hint").textContent = HINTS[level.value] || "";
+  }
+  level.addEventListener("change", describeLevel);
+  describeLevel();
+
+  merge.addEventListener("change", () => {
+    mergeName.disabled = !merge.checked;
+    if (merge.checked) mergeName.focus();
+  });
+
+  window.Upload.check(() => {
+    if (!window.SelectedFiles.count()) return "Escolha pelo menos um PDF.";
+    // Sem comprimir, sem girar e sem juntar, a rodada devolve cópias iguais às
+    // que entraram. Melhor dizer isso agora do que na página de resultado.
+    if (level.value === {{ no_compression|tojson }} && rotate.value === "0" && !merge.checked) {
+      return "Do jeito que está, nada seria feito com os arquivos. Escolha um " +
+             "nível de compressão, um giro, ou marque “Juntar tudo num PDF só”.";
+    }
+    return null;
+  });
+</script>
+{% endblock %}

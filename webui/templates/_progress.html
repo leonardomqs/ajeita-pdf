@@ -1,0 +1,68 @@
+{#
+  O andamento: a barra, e a lista dos arquivos se preenchendo.
+
+  Vive num arquivo só porque é desenhado duas vezes — pela página, ao abrir, e
+  pela rota `progress`, a cada pergunta do `progress.js`, que troca este pedaço
+  no lugar. Se a tabela fosse montada em JavaScript, a mesma decisão de layout
+  existiria em dois lugares, e quem não tem JavaScript não veria lista nenhuma.
+
+  Os `data-` do topo são para o `progress.js`: é por `data-state` que ele sabe
+  que a rodada terminou e recarrega a página.
+#}
+<div class="andamento" data-state="{{ state }}" data-files="{{ p.files|length }}"
+     data-percent="{{ p.percent }}" data-done="{{ p.done }}" data-steps="{{ p.steps }}">
+
+  <div class="progress">
+    <div class="progress-track">
+      <span class="progress-fill" style="width: {{ p.percent }}%"></span>
+    </div>
+    <p class="progress-note">
+      <strong>{{ p.label }}</strong>
+      <span class="progress-detail">{{ p.detail }}</span>
+      <span class="progress-percent">{{ p.percent }}%</span>
+    </p>
+  </div>
+
+  {% if p.files %}
+    <div class="scroll scroll--andamento">
+      <table class="files-table">
+        <thead>
+          <tr>
+            <th class="num">#</th>
+            <th>Arquivo</th>
+            {% if p.compressed %}<th class="num">Antes</th>{% endif %}
+            <th class="num">{{ 'Depois' if p.compressed else 'Tamanho' }}</th>
+            {% if p.compressed %}<th class="num">Economia</th>{% endif %}
+            <th class="num"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in p.files %}
+            <tr class="row row--{{ f.state }}">
+              <td class="num item-index">{{ loop.index }}</td>
+              <td class="file-name">{{ f.name }}</td>
+              {% if p.compressed %}<td class="num">{{ f.before }}</td>{% endif %}
+              {# Comprimindo, o "depois" só existe depois: até lá a célula fica
+                 vazia, e não com um número que pareceria um resultado. Sem
+                 comprimir, a coluna é o tamanho do arquivo — que já se sabe
+                 desde o começo, e não há por que escondê-lo. #}
+              <td class="num">{{ f.after if p.compressed else f.size }}</td>
+              {% if p.compressed %}
+                <td class="num {{ 'kept' if f.kept else 'grew' if f.grew else 'shrank' if f.savings }}">{{ f.savings }}</td>
+              {% endif %}
+              <td class="num row-mark">{{ f.mark }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  <p class="hint andamento-note">
+    {# O passo, e não só o arquivo: uma rodada que também gira passa duas vezes
+       por cada PDF, e "3 de 12" apareceria duas vezes sem nada explicando. #}
+    Passo {{ p.done }} de {{ p.steps }}.
+    {%- if job.degrees %} Cada arquivo é comprimido e depois girado.{% endif %}
+    {%- if job.merge_name %} No fim, tudo vira <code>{{ job.merge_name }}</code>.{% endif %}
+  </p>
+</div>
